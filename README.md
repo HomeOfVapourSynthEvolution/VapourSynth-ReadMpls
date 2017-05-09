@@ -11,8 +11,22 @@ Usage
 
 * source: The full path of the mpls file. Don't use relative path.
 
+
 After obtaining the dictionary, you can use your favorite source filter to open them all with a for-loop and splice them together. For example:
+
 ```python
 mpls = core.mpls.Read('D:/rule6/BDMV/PLAYLIST/00001.mpls')
 ret = core.std.Splice([core.ffms2.Source(mpls['clip'][i]) for i in range(mpls['count'])])
+```
+
+
+Compilation
+===========
+
+Requires libbluray for compiling.
+
+```
+./autogen.sh
+./configure
+make
 ```
