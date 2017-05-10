@@ -18,22 +18,37 @@
 #include "mpls_parse.h"
 #include <libbluray/bluray.h>
 
+#include <algorithm>
 #include <string>
 
 #include <VapourSynth.h>
+#include <VSHelper.h>
 
 static void VS_CC readMplsCreate(const VSMap *in, VSMap *out, void *userData, VSCore *core, const VSAPI *vsapi) {
-    const std::string source{ vsapi->propGetData(in, "source", 0, nullptr) };
+    int err;
 
-    mpls_pl * pl = bd_read_mpls(source.c_str());
+    const std::string source{ vsapi->propGetData(in, "source", 0, nullptr) };
+    int angle = int64ToIntS(vsapi->propGetInt(in, "angle", 0, &err));
+
+    if (angle < 0)
+        return vsapi->setError(out, "ReadMpls: angle must be greater than or equal to 0");
+
+    MPLS_PL * pl = bd_read_mpls(source.c_str());
     if (!pl)
         return vsapi->setError(out, ("ReadMpls: failed to open " + source).c_str());
 
     vsapi->propSetInt(out, "count", pl->list_count, paReplace);
-    for (unsigned i = 0; i < pl->list_count; i++)
-        vsapi->propSetData(out, "clip", (source.substr(0, source.find_last_of("/\\") - 8) + "STREAM/" + pl->play_item[i].clip[0].clip_id + ".m2ts").c_str(), -1, paAppend);
-    if (pl->list_count == 1)
+    for (unsigned i = 0; i < pl->list_count; i++) {
+        const MPLS_PI * pi = &pl->play_item[i];
+        angle = std::min(angle, pi->angle_count - 1);
+        const std::string filename = std::string{ pi->clip[angle].clip_id } + ".m2ts";
+        vsapi->propSetData(out, "filename", filename.c_str(), -1, paAppend);
+        vsapi->propSetData(out, "clip", (source.substr(0, source.find_last_of("/\\") - 8) + "STREAM/" + filename).c_str(), -1, paAppend);
+    }
+    if (pl->list_count == 1) {
+        vsapi->propSetData(out, "filename", "", -1, paAppend);
         vsapi->propSetData(out, "clip", "", -1, paAppend);
+    }
 
     bd_free_mpls(pl);
 }
@@ -42,6 +57,9 @@ static void VS_CC readMplsCreate(const VSMap *in, VSMap *out, void *userData, VS
 // Init
 
 VS_EXTERNAL_API(void) VapourSynthPluginInit(VSConfigPlugin configFunc, VSRegisterFunction registerFunc, VSPlugin *plugin) {
-    configFunc("com.holywu.readmpls", "mpls", "Reads a mpls file and returns a dict", VAPOURSYNTH_API_VERSION, 1, plugin);
-    registerFunc("Read", "source:data;", readMplsCreate, nullptr, plugin);
+    configFunc("com.holywu.readmpls", "mpls", "Reads a mpls file and returns a dictionary", VAPOURSYNTH_API_VERSION, 1, plugin);
+    registerFunc("Read",
+                 "source:data;"
+                 "angle:int:opt;",
+                 readMplsCreate, nullptr, plugin);
 }
