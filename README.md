@@ -3,10 +3,10 @@ Description
 
 Reads a mpls file and returns a dictionary, not a clip.
 
-There are three elements in the dictionary.
-* The element with the key 'clip' contains a list of full paths to each m2ts file in the playlist.
-* The element with the key 'filename' contains a list of filenames of each m2ts file in the playlist.
-* The element with the key 'count' contains the number of m2ts files in the playlist.
+There are three elements in the dictionary:
+* key 'clip' contains a list of full paths to each m2ts file in the playlist.
+* key 'filename' contains a list of filenames of each m2ts file in the playlist.
+* key 'count' contains the number of m2ts files in the playlist.
 
 
 Usage
@@ -16,7 +16,7 @@ Usage
 
 * source: The full path of the mpls file. Don't use relative path.
 
-* angle: Selects the angle of the movie.
+* angle: The angle index to select in the playlist. Index numbers start from zero. If the playlist isn't multi-angle, this setting does nothing.
 
 
 After obtaining the dictionary, you can use your favorite source filter to open them all with a for-loop and splice them together. For example:

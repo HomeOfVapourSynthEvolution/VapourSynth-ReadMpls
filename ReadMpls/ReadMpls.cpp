@@ -28,10 +28,7 @@ static void VS_CC readMplsCreate(const VSMap *in, VSMap *out, void *userData, VS
     int err;
 
     const std::string source{ vsapi->propGetData(in, "source", 0, nullptr) };
-    int angle = int64ToIntS(vsapi->propGetInt(in, "angle", 0, &err));
-
-    if (angle < 0)
-        return vsapi->setError(out, "ReadMpls: angle must be greater than or equal to 0");
+    const int angle = int64ToIntS(vsapi->propGetInt(in, "angle", 0, &err));
 
     MPLS_PL * pl = bd_read_mpls(source.c_str());
     if (!pl)
@@ -40,8 +37,15 @@ static void VS_CC readMplsCreate(const VSMap *in, VSMap *out, void *userData, VS
     vsapi->propSetInt(out, "count", pl->list_count, paReplace);
     for (unsigned i = 0; i < pl->list_count; i++) {
         const MPLS_PI * pi = &pl->play_item[i];
-        angle = std::min(angle, pi->angle_count - 1);
-        const std::string filename = std::string{ pi->clip[angle].clip_id } + ".m2ts";
+
+        unsigned effectiveAngle = 0;
+        if (pi->is_multi_angle) {
+            if (angle < 0 || angle >= pi->angle_count)
+                return vsapi->setError(out, ("ReadMpls: angle index out of range. There are only " + std::to_string(pi->angle_count) + " angles in the playlist").c_str());
+            effectiveAngle = angle;
+        }
+
+        const std::string filename = std::string{ pi->clip[effectiveAngle].clip_id } + ".m2ts";
         vsapi->propSetData(out, "filename", filename.c_str(), -1, paAppend);
         vsapi->propSetData(out, "clip", (source.substr(0, source.find_last_of("/\\") - 8) + "STREAM/" + filename).c_str(), -1, paAppend);
     }
