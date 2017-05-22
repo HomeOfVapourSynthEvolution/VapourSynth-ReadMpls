@@ -1,4 +1,4 @@
-AC_INIT([ReadMpls], [1], [https://github.com/HomeOfVapourSynthEvolution/VapourSynth-ReadMpls/issues], [EEDI2], [https://github.com/HomeOfVapourSynthEvolution/VapourSynth-ReadMpls/])
+AC_INIT([ReadMpls], [1], [https://github.com/HomeOfVapourSynthEvolution/VapourSynth-ReadMpls/issues], [ReadMpls], [https://github.com/HomeOfVapourSynthEvolution/VapourSynth-ReadMpls/])
 
 : ${CXXFLAGS=""}
 
