@@ -1,38 +1,40 @@
 Description
 ===========
 
-Reads a mpls file and returns a dictionary, not a clip.
+Get m2ts clip id from a playlist and return a dict.
 
-There are three elements in the dictionary:
+There are three elements in the dict:
+* key 'count' contains the clip counts in the playlist.
 * key 'clip' contains a list of full paths to each m2ts file in the playlist.
-* key 'filename' contains a list of filenames of each m2ts file in the playlist.
-* key 'count' contains the number of m2ts files in the playlist.
+* key 'filename' contains a list of file names of each m2ts file in the playlist.
 
 
 Usage
 =====
 
-    mpls.Read(string source[, int angle=0])
+    mpls.Read(string bd_path, int playlist[, int angle=0])
 
-* source: The full path of the mpls file. Don't use relative path.
+* bd_path: Full path to the root of Blu-ray disc or directory. Don't use relative path and don't contain a trailing slash at the end.
 
-* angle: The angle index to select in the playlist. Index numbers start from zero. If the playlist isn't multi-angle, this setting does nothing.
+* playlist: Playlist number, which is the number in mpls file name.
+
+* angle: Angle number to select in the playlist.
 
 
-After obtaining the dictionary, you can use your favorite source filter to open them all with a for-loop and splice them together. For example:
+After obtaining the dict, you can use your favorite source filter to open them all with a for-loop and splice them together. For example:
 
 ```python
-mpls = core.mpls.Read('D:/rule6/BDMV/PLAYLIST/00001.mpls')
-ret = core.std.Splice([core.ffms2.Source(mpls['clip'][i]) for i in range(mpls['count'])])
+mpls = core.mpls.Read(r'D:\Downloads\rule6', 0)
+clip = core.std.Splice([core.ffms2.Source(mpls['clip'][i]) for i in range(mpls['count'])])
 ```
 
 If you want to put ffms2's index file at another place rather than the same directory of the source file, here is the example:
 
 ```python
-mpls = core.mpls.Read('D:/rule6/BDMV/PLAYLIST/00001.mpls')
+mpls = core.mpls.Read(r'D:\Downloads\rule6', 0)
 clips = []
 for i in range(mpls['count']):
-    clips.append(core.ffms2.Source(source=mpls['clip'][i], cachefile='D:/indexes/rule6/' + mpls['filename'][i].decode() + '.ffindex'))
+    clips.append(core.ffms2.Source(source=mpls['clip'][i], cachefile=r'D:\indices\rule6\' + mpls['filename'][i].decode() + '.ffindex'))
 clip = core.std.Splice(clips)
 ```
 
@@ -40,7 +42,7 @@ clip = core.std.Splice(clips)
 Compilation
 ===========
 
-Requires libbluray for compiling.
+Requires `libbluray`.
 
 ```
 ./autogen.sh

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2017  HolyWu
+    Copyright (C) 2017-2019  HolyWu
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -12,58 +12,57 @@
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "mpls_parse.h"
-#include <libbluray/bluray.h>
-
-#include <algorithm>
 #include <string>
 
 #include <VapourSynth.h>
 #include <VSHelper.h>
 
-static void VS_CC readMplsCreate(const VSMap *in, VSMap *out, void *userData, VSCore *core, const VSAPI *vsapi) {
+#include <libbluray/bluray.h>
+
+static void VS_CC readMplsCreate(const VSMap * in, VSMap * out, void * userData, VSCore * core, const VSAPI * vsapi) {
     int err;
 
-    const std::string source{ vsapi->propGetData(in, "source", 0, nullptr) };
+    const std::string bd_path{ vsapi->propGetData(in, "bd_path", 0, nullptr) };
+    const int playlist = int64ToIntS(vsapi->propGetInt(in, "playlist", 0, nullptr));
     const int angle = int64ToIntS(vsapi->propGetInt(in, "angle", 0, &err));
 
-    MPLS_PL * pl = bd_read_mpls(source.c_str());
-    if (!pl)
-        return vsapi->setError(out, ("ReadMpls: failed to open " + source).c_str());
+    BLURAY * bd = bd_open(bd_path.c_str(), nullptr);
+    if (!bd)
+        return vsapi->setError(out, ("ReadMpls: failed to open " + bd_path).c_str());
 
-    vsapi->propSetInt(out, "count", pl->list_count, paReplace);
-    for (unsigned i = 0; i < pl->list_count; i++) {
-        const MPLS_PI * pi = &pl->play_item[i];
+    BLURAY_TITLE_INFO * titleInfo = bd_get_playlist_info(bd, playlist, angle);
+    if (!titleInfo) {
+        vsapi->setError(out, "ReadMpls: failed to get information of the specified playlist or angle");
+        bd_close(bd);
+        return;
+    }
 
-        unsigned effectiveAngle = 0;
-        if (pi->is_multi_angle) {
-            if (angle < 0 || angle >= pi->angle_count)
-                return vsapi->setError(out, ("ReadMpls: angle index out of range. There are only " + std::to_string(pi->angle_count) + " angles in the playlist").c_str());
-            effectiveAngle = angle;
-        }
-
-        const std::string filename = std::string{ pi->clip[effectiveAngle].clip_id } + ".m2ts";
+    vsapi->propSetInt(out, "count", titleInfo->clip_count, paReplace);
+    for (uint32_t i = 0; i < titleInfo->clip_count; i++) {
+        const std::string filename = std::string{ titleInfo->clips[i].clip_id } + ".m2ts";
+        vsapi->propSetData(out, "clip", (bd_path + "/BDMV/STREAM/" + filename).c_str(), -1, paAppend);
         vsapi->propSetData(out, "filename", filename.c_str(), -1, paAppend);
-        vsapi->propSetData(out, "clip", (source.substr(0, source.find_last_of("/\\") - 8) + "STREAM/" + filename).c_str(), -1, paAppend);
     }
-    if (pl->list_count == 1) {
-        vsapi->propSetData(out, "filename", "", -1, paAppend);
+    if (titleInfo->clip_count == 1) {
         vsapi->propSetData(out, "clip", "", -1, paAppend);
+        vsapi->propSetData(out, "filename", "", -1, paAppend);
     }
 
-    bd_free_mpls(pl);
+    bd_close(bd);
+    bd_free_title_info(titleInfo);
 }
 
 //////////////////////////////////////////
 // Init
 
-VS_EXTERNAL_API(void) VapourSynthPluginInit(VSConfigPlugin configFunc, VSRegisterFunction registerFunc, VSPlugin *plugin) {
-    configFunc("com.holywu.readmpls", "mpls", "Reads a mpls file and returns a dictionary", VAPOURSYNTH_API_VERSION, 1, plugin);
+VS_EXTERNAL_API(void) VapourSynthPluginInit(VSConfigPlugin configFunc, VSRegisterFunction registerFunc, VSPlugin * plugin) {
+    configFunc("com.holywu.readmpls", "mpls", "Get m2ts clip id from a playlist and return a dict", VAPOURSYNTH_API_VERSION, 1, plugin);
     registerFunc("Read",
-                 "source:data;"
+                 "bd_path:data;"
+                 "playlist:int;"
                  "angle:int:opt;",
                  readMplsCreate, nullptr, plugin);
 }
