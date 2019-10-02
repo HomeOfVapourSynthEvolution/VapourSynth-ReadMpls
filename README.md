@@ -45,7 +45,7 @@ Compilation
 Requires `libbluray`.
 
 ```
-./autogen.sh
-./configure
-make
+meson build
+ninja -C build
+ninja -C build install
 ```
