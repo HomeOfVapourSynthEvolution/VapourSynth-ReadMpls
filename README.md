@@ -30,7 +30,7 @@ If you want to put ffms2's index file at another place rather than the same dire
 mpls = core.mpls.Read(r'D:\Downloads\rule6', 0)
 clips = []
 for i in range(mpls['count']):
-    clips.append(core.ffms2.Source(source=mpls['clip'][i], cachefile=r'D:\indices\rule6\' + mpls['filename'][i].decode() + '.ffindex'))
+    clips.append(core.ffms2.Source(source=mpls['clip'][i], cachefile=r'D:\indices\rule6\' + mpls['filename'][i] + '.ffindex'))
 clip = core.std.Splice(clips)
 ```
 

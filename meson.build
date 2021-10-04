@@ -5,7 +5,7 @@ project('ReadMpls', 'cpp',
   version: '4'
 )
 
-vapoursynth_dep = dependency('vapoursynth').partial_dependency(compile_args: true, includes: true)
+vapoursynth_dep = dependency('vapoursynth', version: '>=55').partial_dependency(compile_args: true, includes: true)
 
 libbluray_dep = dependency('libbluray')
 
