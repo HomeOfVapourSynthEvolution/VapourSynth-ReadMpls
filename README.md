@@ -1,24 +1,20 @@
-Description
-===========
-
+# ReadMpls
 Get m2ts clip id from a playlist and return a dict.
 
 There are three elements in the dict:
-* key 'count' contains the clip counts in the playlist.
-* key 'clip' contains a list of full paths to each m2ts file in the playlist.
-* key 'filename' contains a list of file names of each m2ts file in the playlist.
+- key 'count' contains the clip counts in the playlist.
+- key 'clip' contains a list of full paths to each m2ts file in the playlist.
+- key 'filename' contains a list of file names of each m2ts file in the playlist.
 
 
-Usage
-=====
-
+## Usage
     mpls.Read(string bd_path, int playlist[, int angle=0])
 
-* bd_path: Full path to the root of Blu-ray disc or directory. Don't use relative path and don't contain a trailing slash at the end.
+- bd_path: Full path to the root of Blu-ray disc or directory. Don't use relative path and don't contain a trailing slash at the end.
 
-* playlist: Playlist number, which is the number in mpls file name.
+- playlist: Playlist number, which is the number in mpls file name.
 
-* angle: Angle number to select in the playlist.
+- angle: Angle number to select in the playlist.
 
 
 After obtaining the dict, you can use your favorite source filter to open them all with a for-loop and splice them together. For example:
@@ -39,9 +35,7 @@ clip = core.std.Splice(clips)
 ```
 
 
-Compilation
-===========
-
+## Compilation
 Requires `libbluray`.
 
 ```

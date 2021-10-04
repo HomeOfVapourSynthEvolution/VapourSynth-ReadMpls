@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2017-2019  HolyWu
+    Copyright (C) 2017-2021  HolyWu
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -22,18 +22,20 @@
 
 #include <libbluray/bluray.h>
 
-static void VS_CC readMplsCreate(const VSMap * in, VSMap * out, void * userData, VSCore * core, const VSAPI * vsapi) {
-    int err;
+using namespace std::literals;
 
-    const std::string bd_path{ vsapi->propGetData(in, "bd_path", 0, nullptr) };
-    const int playlist = int64ToIntS(vsapi->propGetInt(in, "playlist", 0, nullptr));
-    const int angle = int64ToIntS(vsapi->propGetInt(in, "angle", 0, &err));
+static void VS_CC readMplsCreate(const VSMap* in, VSMap* out, [[maybe_unused]] void* userData, [[maybe_unused]] VSCore* core, const VSAPI* vsapi) {
+    auto err{ 0 };
 
-    BLURAY * bd = bd_open(bd_path.c_str(), nullptr);
+    auto bd_path{ vsapi->propGetData(in, "bd_path", 0, nullptr) };
+    auto playlist{ int64ToIntS(vsapi->propGetInt(in, "playlist", 0, nullptr)) };
+    auto angle{ int64ToIntS(vsapi->propGetInt(in, "angle", 0, &err)) };
+
+    auto bd{ bd_open(bd_path, nullptr) };
     if (!bd)
-        return vsapi->setError(out, ("ReadMpls: failed to open " + bd_path).c_str());
+        return vsapi->setError(out, ("ReadMpls: failed to open "s + bd_path).c_str());
 
-    BLURAY_TITLE_INFO * titleInfo = bd_get_playlist_info(bd, playlist, angle);
+    auto titleInfo{ bd_get_playlist_info(bd, playlist, angle) };
     if (!titleInfo) {
         vsapi->setError(out, "ReadMpls: failed to get information of the specified playlist or angle");
         bd_close(bd);
@@ -41,9 +43,9 @@ static void VS_CC readMplsCreate(const VSMap * in, VSMap * out, void * userData,
     }
 
     vsapi->propSetInt(out, "count", titleInfo->clip_count, paReplace);
-    for (uint32_t i = 0; i < titleInfo->clip_count; i++) {
-        const std::string filename = std::string{ titleInfo->clips[i].clip_id } + ".m2ts";
-        vsapi->propSetData(out, "clip", (bd_path + "/BDMV/STREAM/" + filename).c_str(), -1, paAppend);
+    for (auto i{ 0U }; i < titleInfo->clip_count; i++) {
+        auto filename{ titleInfo->clips[i].clip_id + ".m2ts"s };
+        vsapi->propSetData(out, "clip", (bd_path + "/BDMV/STREAM/"s + filename).c_str(), -1, paAppend);
         vsapi->propSetData(out, "filename", filename.c_str(), -1, paAppend);
     }
     if (titleInfo->clip_count == 1) {
@@ -51,14 +53,14 @@ static void VS_CC readMplsCreate(const VSMap * in, VSMap * out, void * userData,
         vsapi->propSetData(out, "filename", "", -1, paAppend);
     }
 
-    bd_close(bd);
     bd_free_title_info(titleInfo);
+    bd_close(bd);
 }
 
 //////////////////////////////////////////
 // Init
 
-VS_EXTERNAL_API(void) VapourSynthPluginInit(VSConfigPlugin configFunc, VSRegisterFunction registerFunc, VSPlugin * plugin) {
+VS_EXTERNAL_API(void) VapourSynthPluginInit(VSConfigPlugin configFunc, VSRegisterFunction registerFunc, VSPlugin* plugin) {
     configFunc("com.holywu.readmpls", "mpls", "Get m2ts clip id from a playlist and return a dict", VAPOURSYNTH_API_VERSION, 1, plugin);
     registerFunc("Read",
                  "bd_path:data;"
