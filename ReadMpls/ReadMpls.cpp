@@ -61,7 +61,7 @@ static void VS_CC readMplsCreate(const VSMap* in, VSMap* out, [[maybe_unused]] v
 // Init
 
 VS_EXTERNAL_API(void) VapourSynthPluginInit2(VSPlugin* plugin, const VSPLUGINAPI* vspapi) {
-    vspapi->configPlugin("com.holywu.readmpls", "mpls", "Get m2ts clip id from a playlist and return a dict", VS_MAKE_VERSION(4, 0), VAPOURSYNTH_API_VERSION, 0, plugin);
+    vspapi->configPlugin("com.holywu.readmpls", "mpls", "Get m2ts clip id from a playlist and return a dict", VS_MAKE_VERSION(5, 0), VAPOURSYNTH_API_VERSION, 0, plugin);
     vspapi->registerFunction("Read",
                              "bd_path:data;"
                              "playlist:int;"
